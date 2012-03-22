@@ -1,0 +1,248 @@
+<html>
+<head>
+  <script type="text/javascript" src="js/jquery.js"></script>
+  <script type="text/javascript">
+    function checkBasecampData(){
+      var domain = $('#domain').val().replace(/[^\w\d]/g,'');
+      var token = $('#token').val().replace(/[^\w\d]/g,'');
+      $('#domain').val(domain);
+      $('#token').val(token);
+      $('#basecamp_loader').show(); $('#basecamp_status').hide();
+      $.ajax({
+        type: 'GET',
+        dataType: 'xml',
+        url: "https://" + domain +  ".basecamphq.com/me.xml",
+        username: token,
+        password: "X",
+        success: function(data, textStatus, jqXHR){
+          localStorage.person_id = $(data.firstChild.getElementsByTagName('id')).text();
+          localStorage.domain = domain;
+          localStorage.token = token;
+          hideLoader();
+          setOk();
+        },
+        error: function(jqXHR, textStatus){
+          hideLoader();
+          setFail();
+        }
+      });
+      function hideLoader(){$('#basecamp_loader').hide();}
+      function setOk(){$('#basecamp_status').attr('class','ok').text('Settings has been saved').show();}
+      function setFail(){$('#basecamp_status').attr('class','error').text('Settings has not been applied, check them out again. In addition, make sure that you have active Internet connection.').show();}
+    }
+  </script>
+    <style type="text/css">
+        body {
+            background: #E5E5E5;
+            font-family: "Lucida Grande",verdana,arial,helvetica,sans-serif;
+            color: #444;
+        }
+        #main_wrap {
+            padding: 1px 87px;
+        }
+        .main {
+            width: 540px;
+            background: white;
+            padding: 10px 40px 40px 40px;
+            border: 1px #999 solid;
+            border-radius: 4px;
+            box-shadow: 1px 1px 7px gray;
+        }
+        dd {
+            margin-left: 0;
+        }
+        input,
+        textarea {
+            padding: 5px;
+            border: 1px #999 solid;
+            border-radius: 4px;
+            font-size: 1em;
+        }
+        button {
+            box-shadow: 1px 1px 3px #aaa;
+            border: 1px #999 solid;
+            border-radius: 4px;
+            padding: 10px 30px;
+            cursor: pointer;
+        }
+        #token {
+            width: 23em;
+        }
+        .error {
+            color: red;
+        }
+        .ok {
+            color: green;
+        }
+        .buttons {
+            padding-top:10px;
+        }
+		.copy {
+			color: #888;
+			font-size: 9px;
+			float: right;
+		}
+		.copy a {
+			color: #888;
+			text-decoration: none;
+		}
+		.copy a:hover {
+			color: #888;
+			text-decoration: underline;
+		}
+
+    </style>
+</head>
+<body>
+<div id="main_wrap">
+  <div class="main">
+    <h2>Basecamp Settings</h2>
+
+    <div class="list_wrapper">
+
+
+      <dl>
+        <dt><label for="domain" class="required">Domain</label></dt>
+        <dd><input type="text" name="domain" id="domain" oninput="markDirty()"><label
+                for="domain">.basecamphq.com</label>
+        </dd>
+        <dt><label for="token" class="required">Security token</label></dt>
+        <dd>
+          <input type="text" name="token" id="token" oninput="markDirty()">
+        </dd>
+      </dl>
+    </div>
+    <h2>Statuses</h2>
+
+    <div class="list_wrapper">
+      <dl>
+        <dt>Put statuses separated by commas, you can use only letters and numbers.</dt>
+        <dd>
+            <textarea name="statuses" id="statuses" cols="20" rows="10" oninput="markDirty()"></textarea>
+        </dd>
+      </dl>
+    </div>
+    <h2>Plugin Settings</h2>
+
+    <div class="list_wrapper">
+      <dl>
+        <dt>Post comment for task after the change of status?</dt>
+        <dd>
+          <label for="comments_always">
+            <input value="always" type="radio" name="comments" id="comments_always" onchange="markDirty()">
+            always
+          </label><br/>
+          <label for="comment_never">
+            <input value="never" type="radio" name="comments" id="comment_never" onchange="markDirty()">
+            never
+          </label><br/>
+          <label for="comment_selectively">
+            <input value="selectively" type="radio" name="comments" id="comment_selectively" onchange="markDirty()">
+            selectively
+          </label>
+        </dd>
+      </dl>
+    </div>
+    <img src="img/ajax-loader.gif" style="display:none;" id="basecamp_loader">
+    <div id="basecamp_status"></div>
+    <div class="buttons">
+      <button id="save" style="font-weight:bold" onclick="save()">Save</button>
+      <button onclick="init()">Cancel</button>
+    </div>
+	<div class="copy">
+		Developed by <a href="http://alexdets.ru" target="_blank">alexdets.ru</a>.<br/>
+		Used icons by <a href="http://iconza.ru" target="_blank">iconza.ru</a>.
+	</div>
+  </div>
+</div>
+
+
+  <script type="text/javascript">
+    var domainTextbox, tokenTextbox, statusesTextarea;
+    var saveButton;
+    var defaultStatuses = 'completed, urgent, fixed, could not reproduce, reopen';
+
+    init();
+    function init() {
+      domainTextbox = document.getElementById("domain");
+      tokenTextbox = document.getElementById("token");
+      statusesTextarea = document.getElementById("statuses");
+      saveButton = document.getElementById("save");
+
+      domainTextbox.value = localStorage.domain || "";
+      tokenTextbox.value = localStorage.token || "";
+
+      if (empty(localStorage.statuses)) {
+          statusesTextarea.value = defaultStatuses.replace(",", ", \n");
+      } else {
+          statusesTextarea.value = localStorage.statuses.replace(/,/g, ", \n");
+      }
+
+      var comments;
+
+      switch(localStorage.comments) {
+        case "always":
+          comments = "always";
+          break;
+        case "never":
+          comments = "never";
+          break;
+        default:
+          comments = "selectively";
+        }
+      $('input[value=' + comments + ']').attr('checked','checked');
+      markClean();
+    }
+    function save() {
+      checkBasecampData();
+      localStorage.comments = $('input[name=comments]:checked').val();
+      var statuses = $.trim($("#statuses").val()).replace(/\n/g, "").split(",");
+      var statusesArr = new Array();
+        $.each(statuses, function(index, value) {
+            if (!empty(value)) {
+                statusesArr.push($.trim(value));
+            }
+        });
+      localStorage.statuses = implode(",", statusesArr);
+
+      if (empty(localStorage.statuses)) {
+          statusesTextarea.value = defaultStatuses.replace(",", ", \n");
+      } else {
+          statusesTextarea.value = localStorage.statuses.replace(/,/g, ", \n");
+      }
+
+      markClean();
+      chrome.extension.getBackgroundPage().getSettings();
+    }
+    function markDirty() {
+      saveButton.disabled = false;
+    }
+    function markClean() {
+      saveButton.disabled = true;
+    }
+    function implode( glue, pieces ) {
+        return ( ( pieces instanceof Array ) ? pieces.join ( glue ) : pieces );
+    }
+    function explode( delimiter, string ) {
+        var emptyArray = { 0: '' };
+        if ( arguments.length != 2 || typeof arguments[0] == 'undefined' || typeof arguments[1] == 'undefined' ){
+            return null;
+        }
+        if ( delimiter === '' || delimiter === false || delimiter === null ) {
+            return false;
+        }
+        if ( typeof delimiter == 'function' || typeof delimiter == 'object' || typeof string == 'function' || typeof string == 'object' ) {
+            return emptyArray;
+        }
+        if ( delimiter === true ) {
+            delimiter = '1';
+        }
+        return string.toString().split ( delimiter.toString() );
+    }
+    function empty( mixed_var ) {
+        mixed_var = $.trim(mixed_var);
+        return (mixed_var === undefined || mixed_var === "" || mixed_var === 0 || mixed_var == 'undefined'   || mixed_var === "0" || mixed_var === null  || mixed_var === false );
+    }
+  </script>
+</body>
+</html>

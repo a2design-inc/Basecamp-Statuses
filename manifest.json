@@ -1,0 +1,25 @@
+{
+  "name": "Basecamp Statuses",
+  "version": "0.1",
+  "description": "It will help you to easily add statuses to tasks",
+  "icons": { 
+	"16": "img/icon16.png",
+       "48": "img/icon48.png",
+      "128": "img/icon128.png" },
+  "page_action": {
+    "default_icon": "img/icon16.png",
+    "default_title": "Basecamp Statuses"
+  },
+  "permissions": [
+    "https://*.basecamphq.com/*","notifications"
+  ],
+  "content_scripts": [
+    {
+      "matches": [  "https://*.basecamphq.com/*todo_lists*","https://*.basecamphq.com/*todo_items*"],
+      "js": ["js/jquery.js", "js/content.js"],
+      "css": ["content.css"]
+    }
+  ],
+  "options_page": "options.html",
+  "background_page": "background.html"
+}
